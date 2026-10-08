@@ -55,14 +55,24 @@ class FishInfo(BaseModel):
                     f"Species '{self.species}' is not supported. Supported species: {SUPPORTED_SPECIES}"
                 )
 
-        if self.growth_stage not in SUPPORTED_GROWTH_STAGES:
-            matched_stage = [s for s in SUPPORTED_GROWTH_STAGES if s.lower() == self.growth_stage.lower()]
-            if matched_stage:
-                self.growth_stage = matched_stage[0]
-            else:
-                raise ValueError(
-                    f"Growth stage '{self.growth_stage}' is not supported. Supported stages: {SUPPORTED_GROWTH_STAGES}"
-                )
+        stage_aliases = {
+            "growout": "Grow-out",
+            "grow-out": "Grow-out",
+            "brood": "Broodstock",
+            "broodstock": "Broodstock",
+            "fingerling": "Fingerling",
+            "fry": "Fry",
+            "juvenile": "Juvenile",
+            "adult": "Adult",
+        }
+        normalized_stage = stage_aliases.get(self.growth_stage.lower(), self.growth_stage)
+        matched_stage = [s for s in SUPPORTED_GROWTH_STAGES if s.lower() == normalized_stage.lower()]
+        if matched_stage:
+            self.growth_stage = matched_stage[0]
+        else:
+            raise ValueError(
+                f"Growth stage '{self.growth_stage}' is not supported. Supported stages: {SUPPORTED_GROWTH_STAGES}"
+            )
 
         if self.fish_count is None:
             # Auto-calculate: biomass_kg * 1000 / avg_weight_g

@@ -206,11 +206,6 @@ python backend/scripts/train_pollution_model.py
 python backend/app/main.py
 ```
 
-### Launch Streamlit Dashboard
-```bash
-streamlit run streamlit_app.py
-```
-
 ---
 
 ## 11. Scientific Disclosures & Prototype Limitations

@@ -44,4 +44,19 @@ class Settings(BaseModel):
     trained_models_dir: Path = TRAINED_MODELS_DIR
 
 
+    # Server and CORS settings
+    api_host: str = Field(default_factory=lambda: os.getenv("AQUANEX_API_HOST", "0.0.0.0"))
+    api_port: int = Field(default_factory=lambda: int(os.getenv("AQUANEX_API_PORT", "8000")))
+    cors_origins_raw: str = Field(
+        default_factory=lambda: os.getenv(
+            "AQUANEX_CORS_ORIGINS",
+            "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001",
+        )
+    )
+
+    @property
+    def cors_origins(self) -> list:
+        return [origin.strip() for origin in self.cors_origins_raw.split(",") if origin.strip()]
+
+
 settings = Settings()

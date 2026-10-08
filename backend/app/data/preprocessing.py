@@ -90,13 +90,25 @@ class AquaNexPreprocessor(BaseEstimator, TransformerMixin):
                 row_vals.append(val)
 
             # 2. Species one-hot
-            current_species = str(r.get("fishSpecies", r.get("species", "Tilapia"))).capitalize()
+            raw_species = str(r.get("fishSpecies", r.get("species", "Tilapia"))).strip().capitalize()
+            from backend.app.config.constants import SPECIES_PROFILES
+            current_species = SPECIES_PROFILES.get(raw_species, {}).get("ml_species_alias", raw_species)
             for sp in self.species_list:
                 row_vals.append(1.0 if current_species == sp else 0.0)
 
             # 3. Stage one-hot
-            current_stage = str(r.get("growthStage", r.get("growth_stage", "Grow-out"))).capitalize()
-            # Normalize stage name capitalization
+            raw_stage = str(r.get("growthStage", r.get("growth_stage", "Grow-out"))).strip()
+            stage_aliases = {
+                "fingerling": "Fry",
+                "broodstock": "Adult",
+                "brood": "Adult",
+                "growout": "Grow-out",
+                "grow-out": "Grow-out",
+                "fry": "Fry",
+                "juvenile": "Juvenile",
+                "adult": "Adult",
+            }
+            current_stage = stage_aliases.get(raw_stage.lower(), raw_stage.capitalize())
             for st in self.stages_list:
                 row_vals.append(1.0 if current_stage == st else 0.0)
 

@@ -13,7 +13,6 @@ AquaNex AI is a production-grade machine learning and operations research platfo
 - **SciPy Constrained Optimization**: Solves bounded loss minimization across daily meal frequencies ($1 - 4$ meals/day) balancing feed expense against waste penalties and pollution risks.
 - **Explainable AI (SHAP)**: Real-time TreeSHAP feature attribution explaining model drivers for each pond prediction.
 - **SQLite Database**: Persistent parameterized storage for ponds, water readings, feeding history, and recommendations.
-- **Streamlit Interactive Frontend**: Clean, responsive dashboard with preset demo scenarios, gauges, and comparison against static chart baselines.
 
 ---
 
@@ -32,11 +31,6 @@ python -m pytest backend/tests -v
 ### 3. Run Backend Verification
 ```bash
 python backend/app/main.py
-```
-
-### 4. Launch Streamlit Application
-```bash
-streamlit run streamlit_app.py
 ```
 
 ---
@@ -64,8 +58,6 @@ streamlit run streamlit_app.py
 │   ├── scripts/             # Offline training scripts
 │   ├── tests/               # Pytest suite (24 unit, integration & scenario tests)
 │   └── README.md            # In-depth technical documentation
-├── streamlit_app.py         # Streamlit UI dashboard
-├── app.py                   # Deployment root entry point
 ├── requirements.txt         # Pinned project dependencies
 └── README.md
 ```
