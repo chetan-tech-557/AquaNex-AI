@@ -1,0 +1,53 @@
+{
+  "model_name": "AquaNex Feed Requirement RandomForestRegressor",
+  "champion_algorithm": "RandomForestRegressor",
+  "task": "regression",
+  "target_column": "recommended_feed_g",
+  "target_unit": "kg/day",
+  "trained_timestamp_utc": "2026-10-08T18:09:46.949532+00:00",
+  "training_rows": 235098,
+  "test_rows": 58870,
+  "unique_training_ponds": 160,
+  "unique_test_ponds": 40,
+  "numerical_features": [
+    "biomass_kg",
+    "fish_count",
+    "avg_weight_g",
+    "water_temperature_c",
+    "dissolved_oxygen_mg_l",
+    "ph",
+    "turbidity_ntu",
+    "ammonia_mg_l",
+    "nitrate_mg_l",
+    "previous_feed_g",
+    "air_temperature_c",
+    "rainfall_mm",
+    "relative_humidity_pct"
+  ],
+  "categorical_features": [
+    "species",
+    "growth_stage",
+    "season"
+  ],
+  "transformed_feature_count": 27,
+  "metrics": {
+    "test_mae_kg": 0.4337,
+    "test_rmse_kg": 0.8978,
+    "test_r2": 0.9991,
+    "train_rmse_kg": 0.6032
+  },
+  "baselines": {
+    "mean_predictor": {
+      "mae_kg": 22.0082,
+      "rmse_kg": 29.7007,
+      "r2": -0.0076
+    },
+    "static_chart_feeding": {
+      "mae_kg": 6.547,
+      "rmse_kg": 10.8292,
+      "r2": 0.866
+    }
+  },
+  "dataset_label": "Controlled simulated prototype dataset",
+  "disclaimer": "All training, validation, and demonstration rows are controlled simulation data developed for the Aarambh WCE Hackathon 2026 prototype. They are not real commercial farm sensor logs; live deployment requires site-specific water calibration, laboratory feed analysis, and aquaculture specialist supervision."
+}

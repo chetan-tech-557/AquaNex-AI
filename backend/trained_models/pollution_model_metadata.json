@@ -1,0 +1,40 @@
+{
+  "model_name": "AquaNex Pollution Risk HistGradientBoostingRegressor",
+  "champion_algorithm": "HistGradientBoostingRegressor",
+  "task": "regression",
+  "target_column": "pollution_risk_score",
+  "target_unit": "score_0_to_100",
+  "trained_timestamp_utc": "2026-10-08T18:11:26.047895+00:00",
+  "training_rows": 235098,
+  "test_rows": 58870,
+  "numerical_features": [
+    "biomass_kg",
+    "water_temperature_c",
+    "dissolved_oxygen_mg_l",
+    "ph",
+    "turbidity_ntu",
+    "ammonia_mg_l",
+    "nitrite_mg_l",
+    "nitrate_mg_l",
+    "rainfall_mm",
+    "relative_humidity_pct",
+    "previous_feed_waste_g"
+  ],
+  "categorical_features": [
+    "species",
+    "growth_stage",
+    "season"
+  ],
+  "metrics": {
+    "test_mae": 2.8158,
+    "test_rmse": 3.5678,
+    "test_r2": 0.9427
+  },
+  "baselines": {
+    "mean_predictor": {
+      "mae": 10.6113,
+      "rmse": 14.9013,
+      "r2": -0.0002
+    }
+  }
+}

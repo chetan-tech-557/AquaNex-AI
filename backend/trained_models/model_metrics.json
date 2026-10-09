@@ -1,74 +1,32 @@
 {
-  "selectedModel": "Gradient Boosting Regressor (selected by held-out test RMSE)",
-  "trainingRows": 512,
-  "testRows": 128,
+  "status": "trained_successfully",
+  "trainingDate": "2026-10-08T18:11:26.055975+00:00",
+  "totalRowsProcessed": 293968,
+  "feedModel": {
+    "name": "RandomForestRegressor",
+    "target": "recommended_feed_g",
+    "unit": "kg/day",
+    "mae": 0.4337,
+    "rmse": 0.8978,
+    "r2": 0.9991,
+    "baselineChartR2": 0.866
+  },
+  "wasteModel": {
+    "name": "HistGradientBoostingRegressor",
+    "target": "expected_waste_pct",
+    "unit": "percentage",
+    "mae": 0.9676,
+    "rmse": 1.2481,
+    "r2": 0.9616
+  },
+  "pollutionModel": {
+    "name": "HistGradientBoostingRegressor",
+    "target": "pollution_risk_score",
+    "unit": "score_0_to_100",
+    "mae": 2.8158,
+    "rmse": 3.5678,
+    "r2": 0.9427
+  },
   "datasetLabel": "Controlled simulated prototype dataset",
-  "datasetDisclaimer": "All training, validation, and demonstration rows are controlled simulation data developed for the Aarambh WCE Hackathon 2026 prototype. They are not real commercial farm sensor logs; live deployment requires site-specific water calibration, laboratory feed analysis, and aquaculture specialist supervision.",
-  "featureNames": [
-    "temperatureC",
-    "dissolvedOxygenMgL",
-    "pH",
-    "ammoniaMgL",
-    "nitrateMgL",
-    "turbidityNtu",
-    "salinityPpt",
-    "fishAgeDays",
-    "biomassKg",
-    "averageFishWeightG",
-    "previousFeedKg",
-    "recentAverageFeedKg",
-    "feedingFrequency",
-    "feedQualityScore",
-    "feed_to_biomass_ratio",
-    "biomass_per_fish",
-    "temperature_deviation",
-    "do_stress_indicator",
-    "ammonia_stress_indicator",
-    "recent_feeding_trend",
-    "feed_quality_factor",
-    "rainfallMm",
-    "humidityPercent",
-    "airTemperatureC",
-    "species_Tilapia",
-    "species_Carp",
-    "species_Salmon",
-    "stage_Fry",
-    "stage_Juvenile",
-    "stage_Grow-out",
-    "stage_Adult"
-  ],
-  "modelScores": [
-    {
-      "name": "Random Forest Regressor",
-      "available": true,
-      "mae": 0.8454,
-      "rmse": 1.1157,
-      "r2": 0.9449,
-      "note": "Evaluated on held-out test split (20%)"
-    },
-    {
-      "name": "Gradient Boosting Regressor",
-      "available": true,
-      "mae": 0.6874,
-      "rmse": 0.9299,
-      "r2": 0.9617,
-      "note": "Evaluated on held-out test split (20%)"
-    },
-    {
-      "name": "Stage-rate biomass baseline",
-      "available": true,
-      "mae": 5.8082,
-      "rmse": 7.3359,
-      "r2": -1.3816,
-      "note": "Traditional static feed chart baseline"
-    },
-    {
-      "name": "XGBoost Regressor",
-      "available": false,
-      "mae": null,
-      "rmse": null,
-      "r2": null,
-      "note": "Not installed in this environment; no fabricated score claimed."
-    }
-  ]
+  "datasetDisclaimer": "All training, validation, and demonstration rows are controlled simulation data developed for the Aarambh WCE Hackathon 2026 prototype. They are not real commercial farm sensor logs; live deployment requires site-specific water calibration, laboratory feed analysis, and aquaculture specialist supervision."
 }

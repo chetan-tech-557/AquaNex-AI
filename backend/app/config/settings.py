@@ -15,6 +15,8 @@ FEED_MODEL_PATH = TRAINED_MODELS_DIR / "feed_model.joblib"
 WASTE_MODEL_PATH = TRAINED_MODELS_DIR / "waste_model.joblib"
 POLLUTION_MODEL_PATH = TRAINED_MODELS_DIR / "pollution_model.joblib"
 FEED_PIPELINE_PATH = TRAINED_MODELS_DIR / "feed_pipeline.joblib"
+WASTE_PIPELINE_PATH = TRAINED_MODELS_DIR / "waste_pipeline.joblib"
+POLLUTION_PIPELINE_PATH = TRAINED_MODELS_DIR / "pollution_pipeline.joblib"
 MODEL_METRICS_PATH = TRAINED_MODELS_DIR / "model_metrics.json"
 
 DEFAULT_DB_PATH = BASE_DIR / "aquanex.db"
@@ -39,6 +41,8 @@ class Settings(BaseModel):
     waste_model_path: Path = WASTE_MODEL_PATH
     pollution_model_path: Path = POLLUTION_MODEL_PATH
     feed_pipeline_path: Path = FEED_PIPELINE_PATH
+    waste_pipeline_path: Path = WASTE_PIPELINE_PATH
+    pollution_pipeline_path: Path = POLLUTION_PIPELINE_PATH
     model_metrics_path: Path = MODEL_METRICS_PATH
     raw_data_path: Path = RAW_DATA_PATH
     trained_models_dir: Path = TRAINED_MODELS_DIR

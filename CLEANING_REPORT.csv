@@ -1,0 +1,10 @@
+metric,count
+Raw rows,300000
+Clean ML-ready rows,293968
+Duplicate rows removed,0
+Parse errors removed,0
+Sensor-quality rows removed,6032
+Domain-invalid rows removed,0
+Feed-consumed values capped,11529
+Feed-waste values recalculated,0
+Biomass values recalculated,0

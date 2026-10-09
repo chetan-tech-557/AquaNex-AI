@@ -1,0 +1,7 @@
+website_module,input_features,target_or_output,source_file
+Pond Setup,"species, fish_count, avg_weight_g, pond_area_m2, pond_depth_m",biomass_kg,features_fish_growth.csv
+Live Water,"temperature, DO, pH, turbidity, ammonia, nitrite, nitrate",water_alert_level,features_water_quality.csv
+Smart Feeding,fish + water + feed history + environment + time,recommended_feed_g,ml_feed_optimization.csv
+Waste Prediction,biomass + water + previous feeding response + time,expected_waste_pct,ml_waste_prediction.csv
+Pollution Risk,water + feed waste + weather + fish context,pollution_risk_score / level,ml_pollution_risk.csv
+Dashboard,latest pond state,cards + alerts,website_pond_snapshot.csv

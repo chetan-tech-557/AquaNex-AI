@@ -86,26 +86,26 @@ class WaterQuality(BaseModel):
 
     water_temperature_c: float = Field(
         default=27.0,
-        ge=4.0,
-        le=42.0,
+        ge=0.0,
+        le=45.0,
         description="Water temperature in degrees Celsius",
     )
     dissolved_oxygen_mg_l: float = Field(
         default=6.2,
-        ge=0.1,
-        le=20.0,
+        ge=0.0,
+        le=25.0,
         description="Dissolved oxygen concentration in mg/L (ppm)",
     )
     ph: float = Field(
         default=7.4,
-        ge=4.5,
-        le=10.5,
+        ge=3.0,
+        le=11.0,
         description="Water pH measure (acidity / alkalinity)",
     )
     ammonia_mg_l: float = Field(
         default=0.025,
         ge=0.0,
-        le=2.0,
+        le=10.0,
         description="Total ammonia nitrogen concentration in mg/L",
     )
     nitrate_mg_l: float = Field(
@@ -194,46 +194,99 @@ class FeedingPredictionInput(BaseModel):
 
     @classmethod
     def from_flat_dict(cls, data: Dict[str, Any]) -> "FeedingPredictionInput":
-        """Construct from flat dictionary matching either prototype camelCase or snake_case."""
-        # Normalize keys
-        def get_val(keys: list, default):
+        """Construct from flat dictionary matching either prototype, backend, or Next.js frontend formats."""
+        def get_val(keys: list, default=None):
             for k in keys:
                 if k in data and data[k] is not None:
                     return data[k]
             return default
 
+        # 1. Species & Stage
+        raw_species = str(get_val(["species", "fishSpecies", "fish_species"], "Tilapia")).strip().capitalize()
+        raw_stage = str(get_val(["growth_stage", "growthStage", "stage"], "Grow-out")).strip()
+
+        # 2. Demographics & Stock Count
+        stock_count_val = get_val(["stockCount", "stock_count", "fish_count", "fishCount"])
+        survival_val = float(get_val(["survival", "survival_rate", "survivalPct"], 95.0))
+        avg_weight_val = float(get_val(["average_fish_weight_g", "averageFishWeightG", "fish_weight_g", "avgWeight", "avg_weight"], 150.0))
+
+        if stock_count_val is not None:
+            live_count = max(1, int(round(float(stock_count_val) * (survival_val / 100.0))))
+        else:
+            live_count = None
+
+        # 3. Biomass (kg)
+        biomass_val = get_val(["biomass_kg", "biomassKg", "biomass"])
+        if biomass_val is not None:
+            biomass_kg = float(biomass_val)
+        elif live_count is not None and avg_weight_val > 0:
+            biomass_kg = float((live_count * avg_weight_val) / 1000.0)
+        else:
+            biomass_kg = 250.0
+
+        fish_age_val = int(get_val(["fish_age_days", "fishAgeDays", "age_days", "fishAge"], 190))
+
         fish = FishInfo(
-            species=str(get_val(["species", "fishSpecies", "fish_species"], "Tilapia")),
-            fish_age_days=int(get_val(["fish_age_days", "fishAgeDays", "age_days"], 190)),
-            growth_stage=str(get_val(["growth_stage", "growthStage"], "Grow-out")),
-            biomass_kg=float(get_val(["biomass_kg", "biomassKg", "biomass"], 250.0)),
-            average_fish_weight_g=float(get_val(["average_fish_weight_g", "averageFishWeightG", "fish_weight_g"], 150.0)),
-            fish_count=get_val(["fish_count", "fishCount"], None),
+            species=raw_species,
+            fish_age_days=fish_age_val,
+            growth_stage=raw_stage,
+            biomass_kg=max(0.1, biomass_kg),
+            average_fish_weight_g=max(0.1, avg_weight_val),
+            fish_count=live_count,
         )
 
+        # 4. Water Quality
+        explicit_amm = get_val(["ammonia_mg_l", "ammoniaMgL"])
+        if explicit_amm is not None:
+            amm_val = float(explicit_amm)
+        else:
+            raw_amm = float(get_val(["ammonia", "tan"], 0.025))
+            # Flat frontend inputs use TAN (Total Ammonia Nitrogen) in mg/L (0.1 - 5.0).
+            # Convert TAN to un-ionized toxic NH3 equivalent (~8% of TAN under typical 27°C, pH 7.5 conditions)
+            amm_val = round(raw_amm * 0.08, 4) if raw_amm > 0.20 else raw_amm
+
         water = WaterQuality(
-            water_temperature_c=float(get_val(["water_temperature_c", "temperatureC", "water_temp"], 27.0)),
-            dissolved_oxygen_mg_l=float(get_val(["dissolved_oxygen_mg_l", "dissolvedOxygenMgL", "do_mg_l"], 6.2)),
+            water_temperature_c=float(get_val(["water_temperature_c", "temperatureC", "water_temp", "temperature"], 27.0)),
+            dissolved_oxygen_mg_l=float(get_val(["dissolved_oxygen_mg_l", "dissolvedOxygenMgL", "do_mg_l", "oxygen", "dO"], 6.2)),
             ph=float(get_val(["ph", "pH"], 7.4)),
-            ammonia_mg_l=float(get_val(["ammonia_mg_l", "ammoniaMgL", "ammonia"], 0.025)),
+            ammonia_mg_l=max(0.0, amm_val),
             nitrate_mg_l=float(get_val(["nitrate_mg_l", "nitrateMgL", "nitrate"], 22.0)),
             turbidity=float(get_val(["turbidity", "turbidityNtu", "turbidity_ntu"], 14.0)),
             salinity_ppt=float(get_val(["salinity_ppt", "salinityPpt", "salinity"], 0.5)),
         )
 
+        # 5. Feeding Info
+        from backend.app.config.constants import BASELINE_STAGE_RATES
+        default_base_rate = BASELINE_STAGE_RATES.get(fish.growth_stage, 0.025)
+        default_prev_feed = round(fish.biomass_kg * default_base_rate, 2)
+
+        prev_feed_val = float(get_val(["previous_feed_kg", "previousFeedKg", "previous_feed"], default_prev_feed))
+        recent_avg_val = float(get_val(["recent_average_feed_kg", "recentAverageFeedKg", "recent_feed_history", "recent_avg"], prev_feed_val))
+        freq_val = int(get_val(["feeding_frequency", "feedingFrequency", "meals"], 2))
+        quality_val = float(get_val(["feed_quality_score", "feedQualityScore", "feed_quality"], 82.0))
+
         feeding = FeedingInfo(
-            feed_quality_score=float(get_val(["feed_quality_score", "feedQualityScore"], 82.0)),
-            previous_feed_kg=float(get_val(["previous_feed_kg", "previousFeedKg"], 5.0)),
-            recent_average_feed_kg=float(get_val(["recent_average_feed_kg", "recentAverageFeedKg", "recent_feed_history"], 5.2)),
-            feeding_frequency=int(get_val(["feeding_frequency", "feedingFrequency"], 2)),
+            feed_quality_score=quality_val,
+            previous_feed_kg=prev_feed_val,
+            recent_average_feed_kg=recent_avg_val,
+            feeding_frequency=max(1, min(6, freq_val)),
         )
+
+        # 6. Environmental Context
+        season_str = str(get_val(["season", "season_id"], "summer")).lower()
+        season_rainfall = 85.0 if "monsoon" in season_str or "rain" in season_str else 8.0
+        season_air_temp = 16.0 if "winter" in season_str else (30.0 if "summer" in season_str else 25.0)
+
+        rainfall_val = float(get_val(["rainfall_mm", "rainfallMm", "rainfall"], season_rainfall))
+        humidity_val = float(get_val(["humidity_percent", "humidityPercent", "humidity"], 66.0))
+        air_temp_val = float(get_val(["air_temperature_c", "airTemperatureC", "air_temp"], season_air_temp))
 
         environment = EnvironmentalInfo(
-            rainfall_mm=float(get_val(["rainfall_mm", "rainfallMm"], 8.0)),
-            humidity_percent=float(get_val(["humidity_percent", "humidityPercent"], 66.0)),
-            air_temperature_c=float(get_val(["air_temperature_c", "airTemperatureC"], 25.5)),
+            rainfall_mm=rainfall_val,
+            humidity_percent=humidity_val,
+            air_temperature_c=air_temp_val,
         )
 
-        pond_id = str(get_val(["pond_id", "pondId"], "pond_01"))
+        pond_id = str(get_val(["pond_id", "pondId", "pond"], "pond_01"))
 
         return cls(pond_id=pond_id, fish=fish, water=water, feeding=feeding, environment=environment)

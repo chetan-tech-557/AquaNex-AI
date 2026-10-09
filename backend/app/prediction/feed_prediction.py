@@ -47,12 +47,18 @@ class FeedPredictionService:
                 f"Mild hypoxia guard: Dissolved oxygen ({do:.1f} mg/L) reduced feeding ration slightly to preserve water quality."
             )
 
-        # Baseline confidence estimate based on feature distance and validation metrics
         confidence = 0.94 if applied_cap is None else 0.88
+        model_type = type(self.model_wrapper.model).__name__
+        if "RandomForest" in model_type:
+            display_model_name = "Random Forest Regressor (AquaNex Production Model)"
+        elif "GradientBoosting" in model_type or "HistGradientBoosting" in model_type:
+            display_model_name = "Gradient Boosting Regressor (AquaNex Production Model)"
+        else:
+            display_model_name = f"{model_type} (AquaNex Production Model)"
 
         return FeedPredictionResult(
             recommended_daily_feed_kg=round(adjusted_feed, 2),
-            model_name="Gradient Boosting Regressor (AquaNex Ensemble)",
+            model_name=display_model_name,
             confidence_or_uncertainty=round(confidence, 2),
             unadjusted_ml_feed_kg=round(raw_ml_prediction, 2),
             applied_cap=applied_cap,

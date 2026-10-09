@@ -85,3 +85,7 @@ class FinalRecommendationResponse(BaseModel):
     dataset_disclaimer: str = Field(
         default="Controlled simulated prototype dataset — developed for Aarambh WCE Hackathon 2026."
     )
+    frontend_feeding_result: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Adapted structure directly consumable by the Next.js dashboard UI",
+    )

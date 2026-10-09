@@ -1,0 +1,40 @@
+{
+  "model_name": "AquaNex Feed Waste HistGradientBoostingRegressor",
+  "champion_algorithm": "HistGradientBoostingRegressor",
+  "task": "regression",
+  "target_column": "expected_waste_pct",
+  "target_unit": "percentage",
+  "trained_timestamp_utc": "2026-10-08T18:10:40.156349+00:00",
+  "training_rows": 235098,
+  "test_rows": 58870,
+  "numerical_features": [
+    "biomass_kg",
+    "water_temperature_c",
+    "dissolved_oxygen_mg_l",
+    "ph",
+    "ammonia_mg_l",
+    "turbidity_ntu",
+    "previous_feed_g",
+    "previous_feed_consumed_g",
+    "previous_feed_waste_g",
+    "fish_activity_score",
+    "weather_stress_score"
+  ],
+  "categorical_features": [
+    "species",
+    "growth_stage",
+    "season"
+  ],
+  "metrics": {
+    "test_mae_pct": 0.9676,
+    "test_rmse_pct": 1.2481,
+    "test_r2": 0.9616
+  },
+  "baselines": {
+    "mean_predictor": {
+      "mae_pct": 4.7878,
+      "rmse_pct": 6.3675,
+      "r2": -0.0001
+    }
+  }
+}

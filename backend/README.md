@@ -108,19 +108,41 @@ Domain-informed features implemented in `backend/app/data/feature_engineering.py
 ## 5. Machine Learning Models & Training Pipeline
 
 ### Candidate Comparison & Selection
-Trained on 640 controlled simulation records using an 80/20 train/test split (512 training rows, 128 held-out test rows).
+Trained on 293,968 aquaculture records across 200 distinct ponds using a strict group-aware split (`GroupShuffleSplit` on `pond_id`: 160 training ponds / 40 test ponds; 235,098 train rows / 58,870 test rows) preventing intra-pond data leakage.
 
-| Model Candidate | Test MAE (kg) | Test RMSE (kg) | Test $R^2$ | Status |
+#### Model A: Feed Requirement Regressor (Target: `recommended_feed_g`, evaluated in kg/day)
+| Candidate Model | Test MAE (kg) | Test RMSE (kg) | Test $R^2$ | Status |
 |---|---|---|---|---|
-| **Gradient Boosting Regressor** | **0.6874 kg** | **0.9299 kg** | **0.9617** | **Champion Selected** |
-| Random Forest Regressor | 0.8454 kg | 1.1157 kg | 0.9449 | Candidate Evaluated |
-| Stage-Rate Biomass Baseline | 5.8082 kg | 7.3359 kg | -1.3816 | Traditional Reference |
-| XGBoost Regressor | N/A | N/A | N/A | Not claimed (disclosed) |
+| **Random Forest Regressor (n=40, depth=14)** | **0.4337 kg** | **0.8978 kg** | **0.9991** | **Champion Selected** |
+| HistGradientBoostingRegressor | 0.4429 kg | 0.9060 kg | 0.9990 | Candidate Evaluated |
+| GradientBoostingRegressor (subsample=0.5) | 0.5186 kg | 1.0543 kg | 0.9987 | Candidate Evaluated |
+| Static Feeding Chart Baseline (Species/Biomass) | 8.8710 kg | 10.3546 kg | 0.8660 | Domain Reference |
+| Naive Mean Baseline | 23.3601 kg | 28.2562 kg | -0.0001 | Naive Reference |
 
-### Training Scripts
-- `python backend/scripts/train_feed_model.py`: Trains feed regressor, exports `feed_model.joblib`, `feed_pipeline.joblib`, and `model_metrics.json`.
-- `python backend/scripts/train_waste_model.py`: Trains waste regressor ($R^2 = 0.8839$, $\text{RMSE} = 0.2538$ kg).
-- `python backend/scripts/train_pollution_model.py`: Calibrates pollution risk models.
+#### Model B: Feed Waste Regressor (Target: `expected_waste_pct` in %)
+| Candidate Model | Test MAE (%) | Test RMSE (%) | Test $R^2$ | Status |
+|---|---|---|---|---|
+| **HistGradientBoostingRegressor** | **0.9676%** | **1.2481%** | **0.9616** | **Champion Selected** |
+| RandomForestRegressor (n=30, depth=12) | 1.0118% | 1.3090% | 0.9578 | Candidate Evaluated |
+| Naive Mean Baseline | 6.0125% | 6.3980% | -0.0084 | Naive Reference |
+
+#### Model C: Pond Pollution Risk Regressor (Target: `pollution_risk_score` 0–100)
+| Candidate Model | Test MAE | Test RMSE | Test $R^2$ | Status |
+|---|---|---|---|---|
+| **HistGradientBoostingRegressor** | **2.8158** | **3.5678** | **0.9427** | **Champion Selected** |
+| RandomForestRegressor (n=30, depth=12) | 2.9234 | 3.6920 | 0.9386 | Candidate Evaluated |
+| Naive Mean Baseline | 12.3104 | 14.8966 | -0.0041 | Naive Reference |
+
+### Training Script
+All three models, pipelines, and evaluation metrics are trained and exported via:
+```bash
+python backend/scripts/train_models.py
+```
+Outputs saved to `backend/trained_models/`:
+- `feed_model.joblib`, `feed_pipeline.joblib`, `feed_model_metadata.json`
+- `waste_model.joblib`, `waste_pipeline.joblib`, `waste_model_metadata.json`
+- `pollution_model.joblib`, `pollution_pipeline.joblib`, `pollution_model_metadata.json`
+- `model_metrics.json`
 
 ---
 
@@ -192,16 +214,21 @@ Located at `backend/aquanex.db`:
 ```bash
 python -m pytest backend/tests -v
 ```
-All 24 unit, integration, and scenario tests execute and pass in under 3 seconds.
+All 33 unit, integration, scenario, and model inference tests execute and pass in ~4.9 seconds.
 
 ### Retrain Models (Offline Pipeline)
 ```bash
-python backend/scripts/train_feed_model.py
-python backend/scripts/train_waste_model.py
-python backend/scripts/train_pollution_model.py
+python backend/scripts/train_models.py
 ```
+This executes the unified group-aware training pipeline on 293,968 rows across 200 ponds without data leakage and exports model pipelines and metadata.
 
-### Run Backend Verification
+### Run Backend Server
+```bash
+python -m uvicorn backend.app.server:app --host 127.0.0.1 --port 8000 --reload
+```
+Interactive OpenAPI / Swagger docs are available at `http://127.0.0.1:8000/docs`.
+
+### Run Backend Verification Script
 ```bash
 python backend/app/main.py
 ```

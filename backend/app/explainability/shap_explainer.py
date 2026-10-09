@@ -42,6 +42,38 @@ FEATURE_DISPLAY_NAMES = {
 }
 
 
+def format_feature_display(name: str) -> str:
+    cleaned = name
+    if cleaned.startswith("num__"):
+        cleaned = cleaned[5:]
+    elif cleaned.startswith("cat__"):
+        cleaned = cleaned[5:]
+    mapping = {
+        "previous_feed_g": "Previous Feed (g)",
+        "biomass_kg": "Total Biomass (kg)",
+        "fish_count": "Fish Stock Count",
+        "avg_weight_g": "Average Fish Weight (g)",
+        "water_temperature_c": "Water Temperature (°C)",
+        "dissolved_oxygen_mg_l": "Dissolved Oxygen (mg/L)",
+        "ph": "Water pH",
+        "turbidity_ntu": "Turbidity (NTU)",
+        "ammonia_mg_l": "Ammonia (mg/L)",
+        "nitrate_mg_l": "Nitrate (mg/L)",
+        "air_temperature_c": "Air Temperature (°C)",
+        "rainfall_mm": "Rainfall (mm)",
+        "relative_humidity_pct": "Relative Humidity (%)",
+    }
+    if cleaned in mapping:
+        return mapping[cleaned]
+    if cleaned.startswith("species_"):
+        return f"Species: {cleaned[8:]}"
+    if cleaned.startswith("growth_stage_"):
+        return f"Stage: {cleaned[13:]}"
+    if cleaned.startswith("season_"):
+        return f"Season: {cleaned[7:]}"
+    return FEATURE_DISPLAY_NAMES.get(name, cleaned.replace("_", " ").title())
+
+
 class ShapExplainerService:
     """Computes SHAP feature importance attributions for feed requirement predictions."""
 
@@ -69,9 +101,13 @@ class ShapExplainerService:
         predicted_feed_kg: float,
     ) -> ExplanationResult:
         """Generate SHAP attributions and operator-facing explanations."""
+        from backend.app.models.feed_model import normalize_feed_features
+        import pandas as pd
         pipeline = get_feed_pipeline()
-        X_vec = pipeline.transform([features])
-        feature_names = pipeline.get_feature_names_out()
+        row = normalize_feed_features(features)
+        df_row = pd.DataFrame([row])
+        X_vec = pipeline.transform(df_row)
+        feature_names = list(pipeline.get_feature_names_out())
 
         explainer = self._get_explainer()
         top_features: List[FeatureContribution] = []
@@ -90,14 +126,25 @@ class ShapExplainerService:
                 # Pair feature name with shap value
                 scored = []
                 for name, sv in zip(feature_names, vals):
-                    val_str = features.get(name, "present" if ("species_" in name or "stage_" in name) else 0.0)
+                    raw_col = name
+                    if raw_col.startswith("num__"):
+                        raw_col = raw_col[5:]
+                    elif raw_col.startswith("cat__"):
+                        raw_col = raw_col[5:]
+
+                    if raw_col in row:
+                        val_str = row[raw_col]
+                    elif "_" in raw_col and raw_col.split("_")[0] in row:
+                        val_str = row[raw_col.split("_")[0]]
+                    else:
+                        val_str = features.get(raw_col, "present" if ("species" in raw_col or "stage" in raw_col) else 0.0)
                     scored.append((name, float(sv), val_str))
 
                 # Sort by absolute SHAP attribution
                 scored.sort(key=lambda item: abs(item[1]), reverse=True)
 
                 for name, sv, raw_val in scored[:6]:
-                    display = FEATURE_DISPLAY_NAMES.get(name, name.replace("_", " ").title())
+                    display = format_feature_display(name)
                     direction = "INCREASES FEED" if sv > 0 else "DECREASES FEED"
                     top_features.append(
                         FeatureContribution(

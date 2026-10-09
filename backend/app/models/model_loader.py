@@ -27,7 +27,7 @@ def _load_joblib_file(path: Path, name: str) -> Any:
     if not path.exists():
         raise ModelLoadError(
             f"{name} artifact not found at '{path.as_posix()}'. "
-            f"Please run the training script first: 'python backend/scripts/train_feed_model.py'."
+            f"Please run the training script first: 'python backend/scripts/train_models.py'."
         )
     try:
         obj = joblib.load(path)
@@ -61,6 +61,14 @@ def get_waste_model() -> Any:
         return _models["waste_model"]
 
 
+def get_waste_pipeline() -> Any:
+    """Retrieve singleton Waste Preprocessor Pipeline."""
+    with _lock:
+        if "waste_pipeline" not in _models:
+            _models["waste_pipeline"] = _load_joblib_file(settings.waste_pipeline_path, "Waste Pipeline")
+        return _models["waste_pipeline"]
+
+
 def get_pollution_model() -> Optional[Any]:
     """Retrieve singleton Pollution Model (if available)."""
     with _lock:
@@ -70,6 +78,17 @@ def get_pollution_model() -> Optional[Any]:
             else:
                 _models["pollution_model"] = None
         return _models["pollution_model"]
+
+
+def get_pollution_pipeline() -> Optional[Any]:
+    """Retrieve singleton Pollution Preprocessor Pipeline."""
+    with _lock:
+        if "pollution_pipeline" not in _models:
+            if settings.pollution_pipeline_path.exists():
+                _models["pollution_pipeline"] = _load_joblib_file(settings.pollution_pipeline_path, "Pollution Pipeline")
+            else:
+                _models["pollution_pipeline"] = None
+        return _models["pollution_pipeline"]
 
 
 def clear_model_cache():
